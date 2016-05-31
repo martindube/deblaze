@@ -200,7 +200,8 @@ class RemotingService(object):
     """
 
     def __init__(self, url, amf_version=pyamf.AMF0, client_type=DEFAULT_CLIENT_TYPE,
-                 referer=None, user_agent=DEFAULT_USER_AGENT, strict=False):
+                 referer=None, user_agent=DEFAULT_USER_AGENT, strict=False,
+                 ssl_ctx=None):
         self.logger = logging.instance_logger(self)
         self.original_url = url
         self.requests = []
@@ -213,6 +214,7 @@ class RemotingService(object):
         self.headers = remoting.HeaderCollection()
         self.http_headers = {}
         self.strict = strict
+        self.ssl_ctx = ssl_ctx
 
         self._setUrl(url)
 
@@ -254,7 +256,8 @@ class RemotingService(object):
             if port is None:
                 port = httplib.HTTPS_PORT
 
-            self.connection = httplib.HTTPSConnection(hostname, port)
+            self.connection = httplib.HTTPSConnection(hostname, port,
+                                                      context=self.ssl_ctx)
         else:
             raise ValueError('Unknown scheme')
 

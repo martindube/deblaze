@@ -698,8 +698,11 @@ class Deblaze:
     methodsArray = []
     gatewaysArray = []
     servicesArray = []
+    ssl_ctx = None
 
-    def __init__ (self, url = None, service = None, method = None, creds = None, cookies = None, agent_string = None, fuzz = False):
+    def __init__ (self, url = None, service = None, method = None, creds = None,
+                  cookies = None, agent_string = None, fuzz = False, 
+                  ssl_ctx = None):
 
         self.url = url
         self.service = service
@@ -709,6 +712,7 @@ class Deblaze:
         self.agent_string = agent_string
         self.gatewayurl = url
         self.fuzz = fuzz
+        self.ssl_ctx = ssl_ctx
 
 
     def auto(self):
@@ -749,7 +753,8 @@ class Deblaze:
         @return: Nothing
     
         """    
-        gw = RemotingService(self.gatewayurl, user_agent=self.agent_string)
+        gw = RemotingService(self.gatewayurl, user_agent=self.agent_string,
+                             ssl_ctx=self.ssl_ctx)
         
         amf_server_debug = {
         "amf": "true",
@@ -1147,6 +1152,7 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", help="Print http request/response", action="store_true")
     parser.add_option("-r", "--report", help="Generate HTML report", action="store_true")
     parser.add_option("-n", "--nobanner", help="Do not display banner", action="store_true")
+    parser.add_option("--no-check-certificate", help="Ignore invalid certificates", action="store_true", dest="noCheckCert")
     parser.add_option("-q", "--quiet", help="Do not display messages", action="store_true")
 
     
@@ -1188,6 +1194,12 @@ if __name__ == "__main__":
         useragent = options.useragent
     else:
         useragent = 'PyAMF/%s' % '.'.join(map(lambda x: str(x), pyamf.__version__))
+
+    if options.noCheckCert:
+        import ssl
+        ssl_ctx = ssl._create_unverified_context() 
+    else:
+        ssl_ctx = None
         
     if options.swf:
         if not os.path.isfile('swfdump'):
@@ -1238,7 +1250,8 @@ if __name__ == "__main__":
         sys.exit(1)
    
     else:
-        d = Deblaze(options.url, options.service, options.method, options.creds, cookies, useragent,  options.fuzz)
+        d = Deblaze(options.url, options.service, options.method, options.creds,
+                    cookies, useragent,  options.fuzz, ssl_ctx)
         d.run(*params)
         if options.report:
             buildHTML()
